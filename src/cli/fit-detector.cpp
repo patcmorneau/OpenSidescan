@@ -288,7 +288,7 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
         
         //using each file
         for(unsigned int fileIdx=0;fileIdx<files.size();fileIdx++){
-            //std::cout<<"fileIdx : "<<fileIdx<<std::endl;
+            std::cout<<"fileIdx : "<<fileIdx<<std::endl;
             std::vector<InventoryObject*> detections;            
             
                 //and each image
@@ -301,7 +301,7 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                     for(auto detection=detections.begin();detection != detections.end(); detection++){
                         //std::cout<<"detection size: "<<detections.size()<<std::endl;
                         if(insideHits(*detection,* hits[fileIdx])){
-                            //std::cerr << "HIT" << std::endl;
+                            std::cerr << "HIT" << std::endl;
                             truePositive++;
                         }
                         
