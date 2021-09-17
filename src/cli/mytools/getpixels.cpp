@@ -37,10 +37,16 @@ void boundingbox(int action, int x, int y, int flags, void *userdata)
   
 }
 
-int main()
+int main(int argc,char** argv)
 {
-
-  source = imread("../../../../../Pictures/f22.jpg",1);
+    
+    if(argc != 2){
+    cerr<<"need path as argument";
+    return 1;
+    }
+  string path = argv[1];
+  cout<<path<<endl;
+  source = imread(path,1);
   // Make a dummy image, will be useful to clear the drawing
   Mat dummy = source.clone();
   namedWindow("Window");

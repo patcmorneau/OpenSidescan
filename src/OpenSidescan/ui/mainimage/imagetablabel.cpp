@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
-
+#include <QDebug>
 #include "inventoryobject/inventoryobject.h"
 #include "ui/mainwindow/mainwindow.h"
 #include "ui/inventory/inventoryobjectwindow.h"
@@ -34,7 +34,7 @@ void ImageTabLabel::mousePressEvent(QMouseEvent *event)
     if(event->button() == Qt::LeftButton){
         // Left button starts a rubberband to select a region
         selectionOrigin = event->pos();
-
+        qDebug()<<selectionOrigin;
        //TODO: determine if we clicked inside an object's bounding box and popup the object details dialog if so
 
         if(InventoryObject * obj = insideObject(selectionOrigin)){
