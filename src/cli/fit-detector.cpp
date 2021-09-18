@@ -257,7 +257,7 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
     genome* bestFit = NULL;
     
     std::cerr << "[+] Updating fitness values" << std::endl;
-    
+    //std::cerr << "nb sidescanfile: "<<files.size()<<std::endl;
     //for every genome
     for(auto g=genomes.begin();g!=genomes.end();g++){       
         
@@ -288,20 +288,22 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
         
         //using each file
         for(unsigned int fileIdx=0;fileIdx<files.size();fileIdx++){
-            std::cout<<"fileIdx : "<<fileIdx<<std::endl;
-            std::vector<InventoryObject*> detections;            
+            //std::cout<<"fileIdx : "<<fileIdx<<std::endl;
+            std::vector<InventoryObject*> *detections = new std::vector<InventoryObject*>;            
             
                 //and each image
                 for(auto i=files[fileIdx]->getImages().begin();i!=files[fileIdx]->getImages().end();i++){                
                     
-                     roiDetector.detect(**i, detections);
+                     roiDetector.detect(**i, *detections);
                 
                 }
+                    //std::cerr<<"loop sidescan file done"<<std::endl;
+                    //std::cout<<"detection size: "<<detections->size()<<std::endl;
                     //update precision stats
-                    for(auto detection=detections.begin();detection != detections.end(); detection++){
-                        //std::cout<<"detection size: "<<detections.size()<<std::endl;
+                    for(auto detection=detections->begin();detection != detections->end(); detection++){
+                        
                         if(insideHits(*detection,* hits[fileIdx])){
-                            std::cerr << "HIT" << std::endl;
+                            //std::cerr << "HIT" << std::endl;
                             truePositive++;
                         }
                         
@@ -310,14 +312,14 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                     
                     //update recall stats
                     for(auto h=hits[fileIdx]->begin(); h!=hits[fileIdx]->end(); h++){
-                        if(insideDetections(*h,detections)){
+                        if(insideDetections(*h,*detections)){
                             recalled++;
                         }
                         
                         recallCount++;
                     }
                     
-                    for(auto i=detections.begin();i!=detections.end();i++){
+                    for(auto i=detections->begin();i!=detections->end();i++){
                         delete (*i);
                     }
          }

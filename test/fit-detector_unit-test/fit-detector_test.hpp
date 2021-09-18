@@ -365,7 +365,7 @@ TEST_CASE("fit-detector"){
     double fitThreshold   = 199.999;
 
     int nbGen = 0;    
-    int genMaxCount = 10;
+    int genMaxCount = 5;
     
     
     try{
