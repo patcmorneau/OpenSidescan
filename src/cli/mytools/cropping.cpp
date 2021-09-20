@@ -59,7 +59,7 @@ int main(int argc,char** argv)
   while(k!=27)
   {
     imshow("Window", source );
-    putText(source,"Choose center, and drag, Press ESC to exit and c to clear" ,Point(10,30), FONT_HERSHEY_SIMPLEX, 0.7,Scalar(255,255,255), 2 );
+    putText(source,"click on the upper right corner, and drag\n Press ESC to exit, s to save crop image n for start back with original picture " ,Point(10,30), FONT_HERSHEY_SIMPLEX, 0.7,Scalar(255,255,255), 2 );
     k= waitKey(20) & 0xFF;
     //press to save
     if(k == 's')

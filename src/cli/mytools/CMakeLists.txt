@@ -5,7 +5,7 @@ Date : 17 sept
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(getpixels)
+project(tools)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
@@ -44,10 +44,6 @@ set(INCLUDE_DIR ${SS};
     )
 INCLUDE_DIRECTORIES(${INCLUDE_DIR})
 
-# executable sources files
-set(SOURCE  getpixels.cpp;
-
-    )
 
 
 if(UNIX)
@@ -60,11 +56,13 @@ if(UNIX)
 		
 	# creating targets
 	add_library(cli_dep ${LIB_FILES} ${THIRDPARTY})
-	add_executable(${PROJECT_NAME} ${SOURCE} )
+	add_executable(cropping cropping.cpp)
+	add_executable(scrolling scrolling.cpp)
 
 	# linking dependencies
 	target_link_libraries(cli_dep Eigen3::Eigen ${OpenCV_LIBS})
-	target_link_libraries(${PROJECT_NAME} PUBLIC cli_dep)
+	target_link_libraries(cropping PUBLIC cli_dep)
+	target_link_libraries(scrolling PUBLIC cli_dep)
 
 
 endif()
