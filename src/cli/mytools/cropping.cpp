@@ -43,7 +43,7 @@ int main(int argc,char** argv)
 {
     
     if(argc != 2){
-    cerr<<"need path as argument";
+    cerr<<"need path as argument\n";
     return 1;
     }
   string path = argv[1];
@@ -54,13 +54,21 @@ int main(int argc,char** argv)
   namedWindow("Window");
   // highgui function called when mouse events occur
   setMouseCallback("Window", boundingbox);
+  int image_width = source.cols;
+  int image_height = source.rows;
+  int height_start = 800;
+  int scroll_height = 0;
+  createTrackbar("scroll","Window",&scroll_height,(source.rows - height_start));
   int k=0;
   // loop until escape character is pressed
   while(k!=27)
-  {
-    imshow("Window", source );
-    putText(source,"click on the upper right corner, and drag\n Press ESC to exit, s to save crop image n for start back with original picture " ,Point(10,30), FONT_HERSHEY_SIMPLEX, 0.7,Scalar(255,255,255), 2 );
-    k= waitKey(20) & 0xFF;
+  { 
+    Mat scrolled_image = source(Rect(0,scroll_height,image_width,height_start));
+    imshow("Window", scrolled_image);
+    /*
+    putText(scrolled_image,"click on the upper right corner, and drag\n Press ESC to exit, s to save crop image n for start back with original picture " ,Point(10,30), FONT_HERSHEY_SIMPLEX, 0.7,Scalar(255,255,255), 2 );
+    */
+    k= waitKey(1) & 0xFF;
     //press to save
     if(k == 's')
     {

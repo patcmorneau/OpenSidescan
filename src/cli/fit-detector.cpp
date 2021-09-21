@@ -225,6 +225,7 @@ void cancerize(std::vector<genome*> & genomes){
     genomes.insert(genomes.end(),offsprings.begin(),offsprings.end());    
 }
 
+//check if all hits have been detect
 bool insideHits(InventoryObject * obj,std::vector<hit*> & hits){
     for(auto i=hits.begin();i!=hits.end();i++){
         if(
@@ -239,6 +240,7 @@ bool insideHits(InventoryObject * obj,std::vector<hit*> & hits){
     return false;
 }
 
+//check if all detections have a hit
 bool insideDetections(hit * h, std::vector<InventoryObject*> & detections){
     for(auto i=detections.begin();i!=detections.end();i++){
         if(
@@ -302,7 +304,7 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                     //update precision stats
                     for(auto detection=detections->begin();detection != detections->end(); detection++){
                         
-                        if(insideHits(*detection,* hits[fileIdx])){
+                        if(insideHits(*detection,* hits[fileIdx])){ //check if all hits have been detect
                             //std::cerr << "HIT" << std::endl;
                             truePositive++;
                         }
@@ -312,8 +314,8 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                     
                     //update recall stats
                     for(auto h=hits[fileIdx]->begin(); h!=hits[fileIdx]->end(); h++){
-                        if(insideDetections(*h,*detections)){
-                            recalled++;
+                        if(insideDetections(*h,*detections)){ //check if all detections have a hit
+                            recalled++; 
                         }
                         
                         recallCount++;
