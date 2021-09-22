@@ -21,8 +21,8 @@
 
 #include <Eigen/Dense>
 
-#define POPULATION_SIZE 100
-#define DECIMATION_SIZE 80
+#define POPULATION_SIZE 10
+#define DECIMATION_SIZE 8
 
 typedef struct{
     int channel;
@@ -222,11 +222,21 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                                 true
                                );                
         
+        std::cout<<"file size : "<<files.size()<<"\n";
         //using each file
         for(unsigned int fileIdx=0;fileIdx<files.size();fileIdx++){
             //std::cout<<"fileIdx : "<<fileIdx<<std::endl;
-            std::vector<InventoryObject*> detections;            
-            detections.push_back()
+            std::vector<InventoryObject*> detections; 
+            SidescanFile *element = files[fileIdx];
+            SidescanImage * image = element->getImages()[1];
+            InventoryObject crabpot41(*image,600,1050,700,1150);
+            detections.push_back(&crabpot41);
+            //detections.push_back(image,600,1050,700,1150,"","");//point in detection
+            //detections.push_back(image,500,1300,600,1400,"","");     
+            //detections.push_back(**image,1,1,100,100,"",""); //point not in detections
+            //detections.push_back(image,200,200,300,300); 
+            
+            
                 //and each image
                 /*
                 for(auto i=files[fileIdx]->getImages().begin();i!=files[fileIdx]->getImages().end();i++){                
@@ -234,7 +244,7 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                      //roiDetector.detect(**i, detections);
                 
                 }*/
-                std::cout<<"detection size: "<<detections.size()<<std::endl;
+                //std::cout<<"detection size: "<<detections.size()<<std::endl;
                 // check if all hits have been detect
                 for(auto detection=detections.begin();detection != detections.end(); detection++){
                     if(insideHits(*detection,* hits[fileIdx])){ 
@@ -255,10 +265,10 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                     
                     precisionCount++;
                 }
-                
+                /*
                 for(auto i=detections.begin();i!=detections.end();i++){
                     delete (*i);
-                }
+                }*/
             detections.clear();
          }
         //compute fitness
@@ -301,7 +311,7 @@ int main(int argc,char** argv){
     double fitThreshold   = 199.999;
 
     int nbGen = 0;    
-    int genMaxCount = 3;
+    int genMaxCount = 1;
     
     try{
         load_SSS_Files(files,directory);
@@ -310,20 +320,20 @@ int main(int argc,char** argv){
             throw std::runtime_error(" number of sidescan files and hits files should be equal");
         }
         else{
-        /*
+        
             initGenomes(genomes);
             while((!bestFit || bestFit->fitness < fitThreshold) && nbGen < genMaxCount){
                 std::cerr << "[+] Generation " << nbGen << std::endl;
                 
                 bestFit = updateFitnesses(genomes,files,hits);
-                
+                break;
                 std::cerr << "[-] Best fitness: " << bestFit->fitness << std::endl;
                 
                 if(bestFit->fitness > fitThreshold){
                     break;
                 }
             }
-            */
+            
             
         }
     }
