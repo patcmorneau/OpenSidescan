@@ -1,5 +1,5 @@
 /*
-* Copyright 2019 © Centre Interdisciplinaire de développement en Cartographie des Océans (CIDCO), Tous droits réservés
+* Copyright 2021 © Centre Interdisciplinaire de développement en Cartographie des Océans (CIDCO), Tous droits réservés
 */
 
 
@@ -16,7 +16,6 @@
 #include "../OpenSidescan/sidescan/sidescanimager.h"
 #include "../OpenSidescan/sidescan/sidescanfile.h"
 #include "../OpenSidescan/sidescan/sidescanimage.h"
-//#include "../OpenSidescan/utilities/opencvhelper.h"
 #include "../OpenSidescan/inventoryobject/inventoryobject.h"
 #include "../OpenSidescan/detector/roidetector.h"
 
@@ -47,7 +46,8 @@ void printUsage(){
     exit(1);
 }
 
-void loadFiles(std::vector<SidescanFile*> & files,std::vector<std::vector<hit*> *> & hits, std::string & directoryPath){
+
+void load_SSS_Files(std::vector<SidescanFile*> & files, std::string & directoryPath){
     DIR *dir = NULL;
     
     //TODO: read this lever arm from metadata or user input
@@ -80,12 +80,29 @@ void loadFiles(std::vector<SidescanFile*> & files,std::vector<std::vector<hit*> 
                 SidescanFile * sidescanFile = imager.generate(fileName, antenna2TowPoint);
 
                 files.push_back(sidescanFile);
-                
-                //delete parser;
-                
-                //Read hits -------------------------------------                
+            }
+        }
+        
+        closedir(dir);
+    }
+    else{
+        throw std::runtime_error("Can't open directory");
+    }
+}
+void load_HITS_Files(std::vector<std::vector<hit*>*> & hits, std::string & directoryPath){
+    DIR *dir = NULL;
+    if(dir = opendir(directoryPath.c_str())){
+        
+        std::cerr << "Processing " << directoryPath << std::endl;
+        
+        dirent* file;
+        
+        std::stringstream filenameStream;
+        
+        while(file=readdir(dir)){
+            if(StringUtils::ends_with(file->d_name,".hits")){ 
                 filenameStream.str("");
-                filenameStream << directoryPath << "/" << file->d_name << ".hits";
+                filenameStream << directoryPath << "/" << file->d_name;
                 std::string hitsFilename = filenameStream.str();
                 
                 std::cerr << "[-]     Reading hits data from " << hitsFilename << std::endl;
@@ -102,22 +119,23 @@ void loadFiles(std::vector<SidescanFile*> & files,std::vector<std::vector<hit*> 
                         if(sscanf(line.c_str(),"%d %d %d",&h->channel,&h->x,&h->y) == 3){
                             fileHits->push_back(h);
                         }
+                        else{
+                            std::cerr<<file->d_name<<"\n"; 
+                            throw std::runtime_error("hits file not formatted properly"); //seems to be unstable
+                        }
                     }
                     std::cerr << "[+]     " << fileHits->size() << " hits read" << std::endl;
                     hits.push_back(fileHits);
                     hitsFile.close();
                 }
+                
             }
-            else{
-                std::cerr << "Can't open file " << file->d_name << std::endl;
-                //throw std::runtime_error("Can't open .hits file");
-            }
+            
         }
         
         closedir(dir);
     }
     else{
-        std::cerr << "Can't open directory " << directoryPath << std::endl;
         throw std::runtime_error("Can't open directory");
     }
 }
@@ -141,93 +159,6 @@ void initGenomes(std::vector<genome*> & genomes){
         
         genomes.push_back(g);
     }
-}
-
-bool sortGenome (genome* i,genome* j) { return (i->fitness>j->fitness); }
-
-void decimate(std::vector<genome*> & genomes){
-    std::cerr << "[+] Decimating" << std::endl;
-    
-    std::sort(genomes.begin(),genomes.end(),sortGenome);
-    
-    for(auto i=genomes.begin()+(POPULATION_SIZE-DECIMATION_SIZE);i!=genomes.end();i++){
-        free(*i);
-    }
-    
-    genomes.resize(POPULATION_SIZE - DECIMATION_SIZE);
-}
-
-genome * crossover(genome * f,genome * g){
-    genome * h = (genome*)malloc(sizeof(genome));
-    
-    h->fastThreshold= (rand() % 100 > 50)? g->fastThreshold : f->fastThreshold;
-    h->dbscanEpsilon= (rand() % 100 > 50)? g->dbscanEpsilon : f->dbscanEpsilon;
-    h->dbscanMinPts = (rand() % 100 > 50)? g->dbscanMinPts  : f->dbscanMinPts;
-    h->mserDelta= (rand() % 100 > 50)? g->mserDelta : f->mserDelta;
-    h->mserMinArea= (rand() % 100 > 50)? g->mserMinArea : f->mserMinArea;
-    h->mserMaxArea= (rand() % 100 > 50)? g->mserMaxArea : f->mserMaxArea;
-    h->fitness = 0;
-    
-    return h;
-}
-
-void mutate(genome * h){
-    
-    int mutation = (rand() % 20) - 10; // -10 to 10
-    
-    if(rand() % 100 > 90 && h->fastThreshold + mutation > 0){
-        h->fastThreshold= h->fastThreshold + mutation;
-    }
-    
-    if(rand() % 100 > 90 && h->dbscanEpsilon + mutation > 0){
-        h->dbscanEpsilon= h->dbscanEpsilon  + mutation;
-    }
-    
-    if(rand() % 100 > 90 && h->dbscanMinPts + mutation > 0){
-        h->dbscanMinPts= h->dbscanMinPts + mutation;
-    }
-    
-    if(rand() % 100 > 90 && h->mserDelta + mutation >0){
-        h->mserDelta= h->mserDelta + mutation;   
-    }
-    
-    if(rand() % 100 > 90 && h->mserMinArea + mutation > 0){
-        h->mserMinArea= h->mserMinArea + mutation;
-    }
-    
-}
-
-void repopulate(std::vector<genome*> & genomes){
-    std::vector<genome*> offsprings;
-    
-    std::cerr << "[+] Repopulating..." << std::endl;    
-    
-    while(offsprings.size()<DECIMATION_SIZE){
-        genome * f = genomes.at(rand() % genomes.size());        
-        genome * g = genomes.at(rand() % genomes.size());
-        
-        if(f != g){
-            genome * offspring = crossover(f,g);
-            mutate(offspring);
-            offsprings.push_back(offspring);
-        }
-    }
-    
-    genomes.insert(genomes.end(),offsprings.begin(),offsprings.end());
-}
-
-void cancerize(std::vector<genome*> & genomes){
-    std::vector<genome*> offsprings;
-    
-    std::cerr << "[+] Cancerizing..." << std::endl;    
-    
-    while(offsprings.size()<DECIMATION_SIZE){
-        genome * g = (genome*)malloc(sizeof(genome));
-        randomize(g);
-        offsprings.push_back(g);
-    }
-    
-    genomes.insert(genomes.end(),offsprings.begin(),offsprings.end());    
 }
 
 bool insideHits(InventoryObject * obj,std::vector<hit*> & hits){
@@ -295,17 +226,17 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
         for(unsigned int fileIdx=0;fileIdx<files.size();fileIdx++){
             //std::cout<<"fileIdx : "<<fileIdx<<std::endl;
             std::vector<InventoryObject*> detections;            
-            
+            detections.push_back()
                 //and each image
+                /*
                 for(auto i=files[fileIdx]->getImages().begin();i!=files[fileIdx]->getImages().end();i++){                
                     
-                     roiDetector.detect(**i, detections);
+                     //roiDetector.detect(**i, detections);
                 
-                }
+                }*/
                 std::cout<<"detection size: "<<detections.size()<<std::endl;
                 // check if all hits have been detect
                 for(auto detection=detections.begin();detection != detections.end(); detection++){
-                    //std::cout<<"detection size: "<<detections.size()<<std::endl;
                     if(insideHits(*detection,* hits[fileIdx])){ 
                         std::cerr << "HIT" << std::endl;
                         recalled++;
@@ -370,45 +301,35 @@ int main(int argc,char** argv){
     double fitThreshold   = 199.999;
 
     int nbGen = 0;    
-    int genMaxCount = 1000;
-    
+    int genMaxCount = 3;
     
     try{
-        initGenomes(genomes);
-        loadFiles(files,hits,directory);
-        
-        while((!bestFit || bestFit->fitness < fitThreshold) && nbGen < genMaxCount){
-            std::cerr << "[+] Generation " << nbGen << std::endl;
-            
-            bestFit = updateFitnesses(genomes,files,hits);
-            
-            std::cerr << "[-] Best fitness: " << bestFit->fitness << std::endl;
-            
-            if(bestFit->fitness > fitThreshold){
-                break;
-            }
-            
-            //compute progress
-            double progress = bestFit->fitness - lastFit;
-            
-            if(progress > 0){
-                decimate(genomes);
-                repopulate(genomes);        
-            }
-            else{
-                decimate(genomes);
-                cancerize(genomes);
-            }
-            nbGen++;
-            lastFit = bestFit->fitness;
+        load_SSS_Files(files,directory);
+        load_HITS_Files(hits,directory);
+        if(files.size() != hits.size()){
+            throw std::runtime_error(" number of sidescan files and hits files should be equal");
         }
-        
-        std::cerr << "[-] " << bestFit->fitness << "%  " << "(" << bestFit->fastThreshold << " " << bestFit->dbscanEpsilon << " " << bestFit->dbscanMinPts << " " << bestFit->mserDelta << " " << bestFit->mserMinArea << " " << bestFit->mserMaxArea << " )" << std::endl;
-        
+        else{
+        /*
+            initGenomes(genomes);
+            while((!bestFit || bestFit->fitness < fitThreshold) && nbGen < genMaxCount){
+                std::cerr << "[+] Generation " << nbGen << std::endl;
+                
+                bestFit = updateFitnesses(genomes,files,hits);
+                
+                std::cerr << "[-] Best fitness: " << bestFit->fitness << std::endl;
+                
+                if(bestFit->fitness > fitThreshold){
+                    break;
+                }
+            }
+            */
+            
+        }
     }
     catch(Exception  *e){
-        std::cerr << "Error: " << e->what() << std::endl;
+    std::cerr << "Error: " << e->what() << std::endl;
     }
-    
+      
     return 0;
 }
