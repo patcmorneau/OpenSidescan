@@ -28,15 +28,18 @@ void boundingbox(int action, int x, int y, int flags, void *userdata)
   // Action to be taken when left mouse button is released
   else if( action == EVENT_LBUTTONUP)
   {
-    bottom_corner = Point(x,y);
-    // Calculate center of rectangle
-    //Point middle = Point ((bottom_corner.x - top_corner.x)/2 , (bottom_corner.y - top_corner.y)/2) ;
-    // Draw the boundingbox
-    rectangle(scrolled_image, top_corner, bottom_corner, Scalar(0,0,0), 0, CV_AA );
-    imshow("Window", source);
-    //cout<<middle<<endl;
-    crop = scrolled_image(Range(top_corner.y,bottom_corner.y),Range(top_corner.x,bottom_corner.x));
-    imshow("cropped region",crop);
+    
+        bottom_corner = Point(x,y);
+        if (bottom_corner != top_corner){
+            // Calculate center of rectangle
+            //Point middle = Point ((bottom_corner.x - top_corner.x)/2 , (bottom_corner.y - top_corner.y)/2) ;
+            // Draw the boundingbox
+            rectangle(scrolled_image, top_corner, bottom_corner, Scalar(0,0,0), 0, CV_AA );
+            imshow("Window", source);
+            //cout<<middle<<endl;
+            crop = scrolled_image(Range(top_corner.y,bottom_corner.y),Range(top_corner.x,bottom_corner.x));
+            imshow("cropped region",crop);
+        }
   }
 
   
@@ -60,6 +63,9 @@ int main(int argc,char** argv)
   int image_width = source.cols;
   int image_height = source.rows;
   int height_start = 800;
+  if(image_height < height_start){
+  height_start = image_height - 1;
+  }
   int scroll_height = 0;
   createTrackbar("scroll","Window",&scroll_height,(source.rows - height_start));
   int k=0;
