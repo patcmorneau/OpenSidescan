@@ -14,6 +14,8 @@ using namespace std;
   // Source image
   Mat source;
   Mat crop;
+  Mat scrolled_image;
+  int x = 0;
 
 void boundingbox(int action, int x, int y, int flags, void *userdata)
 {
@@ -21,18 +23,19 @@ void boundingbox(int action, int x, int y, int flags, void *userdata)
   if( action == EVENT_LBUTTONDOWN )
   {
     top_corner = Point(x,y);
+    cout<<top_corner<<endl;
   }
   // Action to be taken when left mouse button is released
   else if( action == EVENT_LBUTTONUP)
   {
     bottom_corner = Point(x,y);
     // Calculate center of rectangle
-    Point middle = Point ((bottom_corner.x - top_corner.x)/2 , (bottom_corner.y - top_corner.y)/2) ;
+    //Point middle = Point ((bottom_corner.x - top_corner.x)/2 , (bottom_corner.y - top_corner.y)/2) ;
     // Draw the boundingbox
-    rectangle(source, top_corner, bottom_corner, Scalar(0,0,0), 0, CV_AA );
+    rectangle(scrolled_image, top_corner, bottom_corner, Scalar(0,0,0), 0, CV_AA );
     imshow("Window", source);
-    cout<<middle<<endl;
-    crop = source(Range(top_corner.y,bottom_corner.y),Range(top_corner.x,bottom_corner.x));
+    //cout<<middle<<endl;
+    crop = scrolled_image(Range(top_corner.y,bottom_corner.y),Range(top_corner.x,bottom_corner.x));
     imshow("cropped region",crop);
   }
 
@@ -60,10 +63,12 @@ int main(int argc,char** argv)
   int scroll_height = 0;
   createTrackbar("scroll","Window",&scroll_height,(source.rows - height_start));
   int k=0;
+  
+  string filename = "";
   // loop until escape character is pressed
-  while(k!=27)
+  while(k!='q')
   { 
-    Mat scrolled_image = source(Rect(0,scroll_height,image_width,height_start));
+    scrolled_image = source(Rect(0,scroll_height,image_width,height_start));
     imshow("Window", scrolled_image);
     /*
     putText(scrolled_image,"click on the upper right corner, and drag\n Press ESC to exit, s to save crop image n for start back with original picture " ,Point(10,30), FONT_HERSHEY_SIMPLEX, 0.7,Scalar(255,255,255), 2 );
@@ -71,8 +76,10 @@ int main(int argc,char** argv)
     k= waitKey(1) & 0xFF;
     //press to save
     if(k == 's')
-    {
-        imwrite("./newFile.png",crop);
+    {   
+        filename = "./newImage" + to_string(x) + ".png";
+        imwrite(filename,crop);
+        x++;
     }
     //press n to restart cropping
     if(k == 'n')
