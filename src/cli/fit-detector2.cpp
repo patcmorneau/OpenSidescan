@@ -230,11 +230,13 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
             SidescanFile *element = files[fileIdx];
             SidescanImage * image = element->getImages()[1];
             InventoryObject crabpot41(*image,600,1050,700,1150);
+            InventoryObject crabpot42(*image,500,1300,600,1400);
+            InventoryObject false_detect1(*image,1,1,100,100);
+            InventoryObject false_detect2(*image,100,100,200,200);
             detections.push_back(&crabpot41);
-            //detections.push_back(image,600,1050,700,1150,"","");//point in detection
-            //detections.push_back(image,500,1300,600,1400,"","");     
-            //detections.push_back(**image,1,1,100,100,"",""); //point not in detections
-            //detections.push_back(image,200,200,300,300); 
+            detections.push_back(&crabpot42);
+            detections.push_back(&false_detect1);
+            detections.push_back(&false_detect2); 
             
             
                 //and each image
@@ -245,25 +247,22 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                 
                 }*/
                 //std::cout<<"detection size: "<<detections.size()<<std::endl;
-                // check if all hits have been detect
+                // check if all detections have a hit
                 for(auto detection=detections.begin();detection != detections.end(); detection++){
                     if(insideHits(*detection,* hits[fileIdx])){ 
                         std::cerr << "HIT" << std::endl;
-                        recalled++;
+                        truePositive++;
                     }
-                    
-                    recallCount++;
+                    precisionCount++;
                 }
                 
-                //check if all detections have a hit
+                // check if all hits have been detect
                 for(auto h=hits[fileIdx]->begin(); h!=hits[fileIdx]->end(); h++){
                     if(insideDetections(*h,detections)){ 
                         std::cerr << "true positive" << std::endl;
-                        truePositive++;
+                        recalled++;
                     }
-                    
-                    
-                    precisionCount++;
+                    recallCount++;
                 }
                 /*
                 for(auto i=detections.begin();i!=detections.end();i++){
