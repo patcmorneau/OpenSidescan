@@ -47,7 +47,7 @@ void printUsage(){
     exit(1);
 }
 
-void loadFiles(std::vector<SidescanFile*> & files,std::vector<std::vector<hit*> *> & hits, std::string & directoryPath){
+void load_SSS_Files(std::vector<SidescanFile*> & files, std::string & directoryPath){
     DIR *dir = NULL;
     
     //TODO: read this lever arm from metadata or user input
@@ -80,12 +80,30 @@ void loadFiles(std::vector<SidescanFile*> & files,std::vector<std::vector<hit*> 
                 SidescanFile * sidescanFile = imager.generate(fileName, antenna2TowPoint);
 
                 files.push_back(sidescanFile);
-                
-                //delete parser;
-                
-                //Read hits -------------------------------------                
+            }
+        }
+        
+        closedir(dir);
+    }
+    else{
+        throw std::runtime_error("Can't open directory");
+    }
+}
+
+void load_HITS_Files(std::vector<std::vector<hit*>*> & hits, std::string & directoryPath){
+    DIR *dir = NULL;
+    if(dir = opendir(directoryPath.c_str())){
+        
+        std::cerr << "Processing " << directoryPath << std::endl;
+        
+        dirent* file;
+        
+        std::stringstream filenameStream;
+        
+        while(file=readdir(dir)){
+            if(StringUtils::ends_with(file->d_name,".hits")){ 
                 filenameStream.str("");
-                filenameStream << directoryPath << "/" << file->d_name << ".hits";
+                filenameStream << directoryPath << "/" << file->d_name;
                 std::string hitsFilename = filenameStream.str();
                 
                 std::cerr << "[-]     Reading hits data from " << hitsFilename << std::endl;
@@ -102,22 +120,23 @@ void loadFiles(std::vector<SidescanFile*> & files,std::vector<std::vector<hit*> 
                         if(sscanf(line.c_str(),"%d %d %d",&h->channel,&h->x,&h->y) == 3){
                             fileHits->push_back(h);
                         }
+                        else{
+                            std::cerr<<"\n\n\n"<<file->d_name<<"\n"; 
+                            throw std::runtime_error("hit file not formatted properly"); //seems to be unstable
+                        }
                     }
                     std::cerr << "[+]     " << fileHits->size() << " hits read" << std::endl;
                     hits.push_back(fileHits);
                     hitsFile.close();
                 }
+                
             }
-            else{
-                std::cerr << "Can't open file " << file->d_name << std::endl;
-                //throw std::runtime_error("Can't open .hits file");
-            }
+            
         }
         
         closedir(dir);
     }
     else{
-        std::cerr << "Can't open directory " << directoryPath << std::endl;
         throw std::runtime_error("Can't open directory");
     }
 }
@@ -362,7 +381,7 @@ int main(int argc,char** argv){
     std::vector<SidescanFile*>       files;
     std::vector<std::vector<hit*> *> hits;
 
-    std::vector<genome*>             genomes;
+    std::vector<genome*>    genomes;
     
     double lastFit = 0.0;
     
@@ -374,33 +393,38 @@ int main(int argc,char** argv){
     
     
     try{
-        initGenomes(genomes);
-        loadFiles(files,hits,directory);
+        load_SSS_Files(files,directory);
+        load_HITS_Files(hits,directory);
+        if(files.size() != hits.size()){
+            throw std::runtime_error("number of sidescan files and hits files should be equal");
+        }
+        else{
         
-        while((!bestFit || bestFit->fitness < fitThreshold) && nbGen < genMaxCount){
-            std::cerr << "[+] Generation " << nbGen << std::endl;
-            
-            bestFit = updateFitnesses(genomes,files,hits);
-            
-            std::cerr << "[-] Best fitness: " << bestFit->fitness << std::endl;
-            
-            if(bestFit->fitness > fitThreshold){
-                break;
+            while((!bestFit || bestFit->fitness < fitThreshold) && nbGen < genMaxCount){
+                std::cerr << "[+] Generation " << nbGen << std::endl;
+                
+                bestFit = updateFitnesses(genomes,files,hits);
+                
+                std::cerr << "[-] Best fitness: " << bestFit->fitness << std::endl;
+                
+                if(bestFit->fitness > fitThreshold){
+                    break;
+                }
+                
+                //compute progress
+                double progress = bestFit->fitness - lastFit;
+                
+                if(progress > 0){
+                    decimate(genomes);
+                    repopulate(genomes);        
+                }
+                else{
+                    decimate(genomes);
+                    cancerize(genomes);
+                }
+                nbGen++;
+                lastFit = bestFit->fitness;
             }
-            
-            //compute progress
-            double progress = bestFit->fitness - lastFit;
-            
-            if(progress > 0){
-                decimate(genomes);
-                repopulate(genomes);        
-            }
-            else{
-                decimate(genomes);
-                cancerize(genomes);
-            }
-            nbGen++;
-            lastFit = bestFit->fitness;
         }
         
         std::cerr << "[-] " << bestFit->fitness << "%  " << "(" << bestFit->fastThreshold << " " << bestFit->dbscanEpsilon << " " << bestFit->dbscanMinPts << " " << bestFit->mserDelta << " " << bestFit->mserMinArea << " " << bestFit->mserMaxArea << " )" << std::endl;
