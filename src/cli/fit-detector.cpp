@@ -16,7 +16,6 @@
 #include "../OpenSidescan/sidescan/sidescanimager.h"
 #include "../OpenSidescan/sidescan/sidescanfile.h"
 #include "../OpenSidescan/sidescan/sidescanimage.h"
-//#include "../OpenSidescan/utilities/opencvhelper.h"
 #include "../OpenSidescan/inventoryobject/inventoryobject.h"
 #include "../OpenSidescan/detector/roidetector.h"
 
@@ -122,7 +121,11 @@ void load_HITS_Files(std::vector<std::vector<hit*>*> & hits, std::string & direc
                         }
                         else{
                             std::cerr<<"\n\n\n"<<file->d_name<<"\n"; 
+<<<<<<< HEAD
                             throw std::runtime_error("hit file not formatted properly"); //seems to be unstable
+=======
+                            throw std::runtime_error("hit file not formatted properly");
+>>>>>>> master
                         }
                     }
                     std::cerr << "[+]     " << fileHits->size() << " hits read" << std::endl;
@@ -321,8 +324,13 @@ genome* updateFitnesses(std::vector<genome*> & genomes,std::vector<SidescanFile*
                      roiDetector.detect(**i, detections);
                 
                 }
+<<<<<<< HEAD
                 std::cout<<"detection size: "<<detections.size()<<std::endl;
                 // check if all hits have been detect
+=======
+                //std::cout<<"detection size: "<<detections.size()<<std::endl;
+                //update precision stats
+>>>>>>> master
                 for(auto detection=detections.begin();detection != detections.end(); detection++){
                     //std::cout<<"detection size: "<<detections.size()<<std::endl;
                     if(insideHits(*detection,* hits[fileIdx])){ 
@@ -393,6 +401,10 @@ int main(int argc,char** argv){
     
     
     try{
+<<<<<<< HEAD
+=======
+        initGenomes(genomes);
+>>>>>>> master
         load_SSS_Files(files,directory);
         load_HITS_Files(hits,directory);
         if(files.size() != hits.size()){
