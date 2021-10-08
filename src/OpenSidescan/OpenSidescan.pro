@@ -85,7 +85,8 @@ SOURCES += main.cpp\
     detector/roidetector.cpp \
     ui/mainwindow/monitorthread.cpp \
     detector/houghdetector.cpp \
-    telemetryManager/telemetrymanager.cpp
+    telemetrymanager/telemetrymanager.cpp
+
 
 
 HEADERS  +=     machinelearning/dbscan.h \
@@ -123,7 +124,8 @@ HEADERS  +=     machinelearning/dbscan.h \
     detector/roidetector.h \
     ui/mainwindow/monitorthread.h \
     detector/houghdetector.h \
-    telemetryManager/telemetrymanager.h
+    telemetrymanager/telemetrymanager.h
+
 
 FORMS    += ui/mainwindow/mainwindow.ui \
     ui/about/aboutdialog.ui

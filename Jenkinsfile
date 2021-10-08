@@ -145,7 +145,6 @@ pipeline {
 		junit 'build/reports/linux-testGUI.xml'
 		archiveArtifacts('build/reports/linux-testGUI.xml')
       }
-
     }
 	*/
     stage('PUBLISH WINDOWS TEST RESULTS ON SERVER'){
@@ -154,8 +153,8 @@ pipeline {
 
         sh 'mkdir -p $publishTestOutputWinx64Dir'
 
-        sh 'ls -al /var/lib/jenkins/jobs/$name/builds/$patch/'
-        sh 'ls -al /var/lib/jenkins/jobs/$name/builds/$patch/archive/'
+        //sh 'ls -al /var/lib/jenkins/jobs/$name/builds/$patch/'
+        //sh 'ls -al /var/lib/jenkins/jobs/$name/builds/$patch/archive/'
 
         sh 'cp /var/lib/jenkins/jobs/$name/builds/$patch/archive/build/reports/win-testGUI.xml $publishTestOutputWinx64Dir'
         //sh 'cp /var/lib/jenkins/jobs/$name/builds/$patch/archive/build/reports/linux-testGUI.xml $publishTestOutputWinx64Dir'

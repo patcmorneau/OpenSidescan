@@ -1,7 +1,8 @@
 #define OPENCV_TRAITS_ENABLE_DEPRECATED
 
 #include "ui/mainwindow/mainwindow.h"
-#include "telemetryManager/telemetrymanager.h"
+#include "telemetrymanager/telemetrymanager.h"
+
 #include <QApplication>
 #include <QSplashScreen>
 
@@ -48,6 +49,9 @@ int main(int argc, char *argv[])
 
     splash.show();
     sleep(1);
+    
+    TelemetryManager telemetry;
+    telemetry.send_telemetry();
 
     TelemetryManager user;
     user.send_telemetry();

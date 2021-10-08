@@ -892,7 +892,9 @@ void MainWindow::actionExportHitsFile(){
     }
 }
 
-void MainWindow::actionExportPyTorch(){
+
+void MainWindow::actionExportYolo(){
+
     if(currentProject){
         QString path = QFileDialog::getExistingDirectory(this,
                                                          tr("Select Directory"),
@@ -902,8 +904,8 @@ void MainWindow::actionExportPyTorch(){
 
         if(path.size() > 0){
             std::string sPath = path.toStdString();
+            currentProject->exportInventory4Yolo(sPath);
 
-            currentProject->exportInventory4PyTorch(sPath);
         }
     }
 
