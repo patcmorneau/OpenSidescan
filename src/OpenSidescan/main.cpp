@@ -1,7 +1,7 @@
 #define OPENCV_TRAITS_ENABLE_DEPRECATED
 
 #include "ui/mainwindow/mainwindow.h"
-#include "telemetrymanager/telemetrymanager.h"
+#include "telemetryManager/telemetrymanager.h"
 #include <QApplication>
 #include <QSplashScreen>
 
