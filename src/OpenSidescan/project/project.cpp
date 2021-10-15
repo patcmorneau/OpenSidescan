@@ -641,10 +641,10 @@ void Project::exportInventory4Yolo(std::string & path){
                             */
 
                             // images are dimension [width X width] , to normalise we divide by [width X width]
-                            double norm_detect_xCenter = double((obj->getXCenter()/double(width)));
-                            double norm_detect_yCenter = double((double(obj->getPixelHeight())/2.0)/double(width));
-                            double detect_norm_width = double((obj->getPixelWidth()/double(width)));
-                            double detect_norm_height = double(double(obj->getPixelHeight())/double(width));
+                            float norm_detect_xCenter = float((obj->getXCenter()/float(width)));
+                            float norm_detect_yCenter = float((float(obj->getPixelHeight())/2.0)/float(width));
+                            float detect_norm_width = float((obj->getPixelWidth()/float(width)));
+                            float detect_norm_height = float(float(obj->getPixelHeight())/float(width));
                             //for debugging purposes
                             /*
                             int norm_detect_xCenter = obj->getXCenter();

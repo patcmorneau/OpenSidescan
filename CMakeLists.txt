@@ -58,7 +58,7 @@ set(LIB_FILES   ${SS}/sidescan/sidescanfile.cpp;
                 ${SS}/ui/mainwindow/monitorthread.cpp;
                 ${SS}/ui/about/aboutdialog.ui;
                 ${SS}/ui/mainwindow/mainwindow.ui;
-                ${SS}/telemetrymanager/telemetrymanager.cpp;
+                ${SS}/telemetryManager/telemetrymanager.cpp;
     )
 
 # thirdParty sources
