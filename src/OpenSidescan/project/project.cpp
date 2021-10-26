@@ -573,8 +573,8 @@ void Project::exportInventory4Yolo(std::string & path){
                 int left_delta_x = k->getX();
                 int right_delta_x = width - 640 - k->getX();
 
-                int x_direction = 0;
-                int y_direction = 0;
+                int x_step = 40;
+                int y_step = 40;
 
                 //determining where to start cropping process
                 if(top_delta_y < bot_delta_y){
@@ -589,7 +589,7 @@ void Project::exportInventory4Yolo(std::string & path){
                         std::cout<<"if 1.5 \n crop start y :"<< crop_start_y
                                  <<"  crop end y :"<<crop_end_y<<"\n";
                     }
-                    y_direction = -40;
+                    y_step = y_step * -1;
                 }
                 else {
                     crop_start_y = (k->getY() + k->getPixelHeight()) - 640;
@@ -602,7 +602,6 @@ void Project::exportInventory4Yolo(std::string & path){
                         std::cout<<"if 2.5 \n crop start y :"<< crop_start_y
                                  <<"  crop end y :"<<crop_end_y<<"\n";
                     }
-                    y_direction = 40;
                 }
 
                 if(left_delta_x < right_delta_x){
@@ -617,7 +616,7 @@ void Project::exportInventory4Yolo(std::string & path){
                         std::cout<<"if 3.5 \n crop start x :"<< crop_start_x
                                  <<"  crop end x :"<<crop_end_x<<"\n";
                     }
-                    x_direction = -40;
+                    x_step = x_step * -1;
                 }
                 else{
                     crop_start_x = (k->getX()+ k->getPixelWidth()) - 640;
@@ -630,7 +629,6 @@ void Project::exportInventory4Yolo(std::string & path){
                         std::cout<<"if 4.5 \n cropt start x :"<< crop_start_x
                                  <<"  crop end x :"<<crop_end_x<<"\n";
                     }
-                    x_direction = 40;
                 }
                 //We are moving the cropping window to generate more than one picture of each object
                 int start_pos_x = crop_start_x;
@@ -673,8 +671,8 @@ void Project::exportInventory4Yolo(std::string & path){
 
                         cv::Mat new_image = image(cv::Range(crop_start_y, crop_end_y), cv::Range(crop_start_x, crop_end_x));
                         //needs to be fix
-                        float norm_detect_xCenter = float((float(k->getPixelWidth()/2.0) + k->getX()) /640.0);
-                        float norm_detect_yCenter = float(float(k->getPixelHeight()/2.0)/640.0);
+                        float norm_detect_xCenter = float((float(k->getPixelWidth()/2.0) + (k->getX() - crop_start_x))/640.0);
+                        float norm_detect_yCenter = float((float(k->getPixelHeight()/2.0) + (k->getY() - crop_start_y ))/640.0);
                         float detect_norm_width = float(k->getPixelWidth()/640.0);
                         float detect_norm_height = float(k->getPixelHeight()/640.0);
 
@@ -694,12 +692,12 @@ void Project::exportInventory4Yolo(std::string & path){
                         outFile.close();
                         cv::imwrite(IMAGEPATH, new_image);
 
-                        crop_start_x = crop_start_x + x_direction;
+                        crop_start_x = crop_start_x + x_step;
                         crop_end_x = crop_start_x + 640;
                     }
                     crop_start_x = start_pos_x;
                     crop_end_x = crop_start_x + 640;
-                    crop_start_y = crop_start_y + y_direction;
+                    crop_start_y = crop_start_y + y_step;
                     crop_end_y = crop_start_y + 640;
                 }
             }
