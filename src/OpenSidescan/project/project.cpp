@@ -562,7 +562,7 @@ void Project::exportInventory4Yolo(std::string & path){
                 int height = image_dimension.height;                        //get image height
                 int width = image_dimension.width;
 
-                //Here we are cropping arround the crabtrap 640x640 -> default resolution in yolov5
+                //Here we are cropping arround the crabtrap 640x480
                 int crop_start_y = 0;
                 int crop_end_y = 0;
                 int crop_start_x = 0;
@@ -571,10 +571,10 @@ void Project::exportInventory4Yolo(std::string & path){
                 int top_delta_y = k->getY();
                 int bot_delta_y = height - 640 - k->getY();
                 int left_delta_x = k->getX();
-                int right_delta_x = width - 640 - k->getX();
+                int right_delta_x = width - 480 - k->getX();
 
                 int x_step = 40;
-                int y_step = 40;
+                int y_step = 50;
 
                 //determining where to start cropping process
                 if(top_delta_y < bot_delta_y){
@@ -606,7 +606,7 @@ void Project::exportInventory4Yolo(std::string & path){
 
                 if(left_delta_x < right_delta_x){
                     crop_start_x = k->getX();
-                    crop_end_x = k->getX() + 640;
+                    crop_end_x = k->getX() + 480;
                     std::cout<<"if 3 \n crop start x :"<< crop_start_x
                              <<"  crop end x :"<<crop_end_x<<"\n";
                     if(crop_end_x > width){
@@ -619,8 +619,8 @@ void Project::exportInventory4Yolo(std::string & path){
                     x_step = x_step * -1;
                 }
                 else{
-                    crop_start_x = (k->getX()+ k->getPixelWidth()) - 640;
-                    crop_end_x = crop_start_x + 640;
+                    crop_start_x = (k->getX()+ k->getPixelWidth()) - 480;
+                    crop_end_x = crop_start_x + 480;
                     std::cout<<"if 4 \n crop start x :"<< crop_start_x
                              <<"  crop end x :"<<crop_end_x<<"\n";
                     if(crop_start_x < 0){
@@ -693,10 +693,10 @@ void Project::exportInventory4Yolo(std::string & path){
                         cv::imwrite(IMAGEPATH, new_image);
 
                         crop_start_x = crop_start_x + x_step;
-                        crop_end_x = crop_start_x + 640;
+                        crop_end_x = crop_start_x + 480;
                     }
                     crop_start_x = start_pos_x;
-                    crop_end_x = crop_start_x + 640;
+                    crop_end_x = crop_start_x + 480;
                     crop_start_y = crop_start_y + y_step;
                     crop_end_y = crop_start_y + 640;
                 }
