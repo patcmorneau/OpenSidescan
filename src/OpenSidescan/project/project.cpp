@@ -552,13 +552,34 @@ bool Project::containsFile(std::string & filename){
 }
 
 void Project::exportInventory4Yolo(std::string & path){
+
+    //creating directories for images and labels
+    QDir Path(QString::fromStdString(path));
+
+    Path.mkpath("labels");
+    Path.mkpath("images");
+    //needs to be tested on windows
+    QDir LabelsPath(QString::fromStdString(path)+ "/labels");
+    QDir ImagesPath(QString::fromStdString(path)+ "/images");
+    //std::cout<<LabelsPath<<"\n";
+    //std::cout<<ImagesPath<<"\n";
+
+    QString labelsPath = LabelsPath.path();
+    QString imagesPath = ImagesPath.path();
+
+    std::string LABELSPATH = labelsPath.toStdString();
+    std::string IMAGESPATH = imagesPath.toStdString();
+    std::cout<<LABELSPATH<<"\n";
+    std::cout<<IMAGESPATH<<"\n";
+
     for(auto i = files.begin(); i != files.end(); ++i){      
         for(auto j=(*i)->getImages().begin();j!=(*i)->getImages().end();j++){
-            //int image_count =0;
             for(unsigned int index = 0; index < (*j)->getObjects().size(); index++){
                 auto k = (*j)->getObjects().at(index);
                 cv::Mat image = (*j)->getImage();                           //get image
                 cv::Size image_dimension = image.size();
+                cv::cvtColor(image,image, cv::COLOR_GRAY2BGR);
+                //std::cout<<image_dimension<<"\n";
                 int height = image_dimension.height;                        //get image height
                 int width = image_dimension.width;
 
@@ -567,140 +588,166 @@ void Project::exportInventory4Yolo(std::string & path){
                 int crop_end_y = 0;
                 int crop_start_x = 0;
                 int crop_end_x = 0;
-                //delta's are relative to the file
-                int top_delta_y = k->getY();
-                int bot_delta_y = height - 640 - k->getY();
-                int left_delta_x = k->getX();
-                int right_delta_x = width - 480 - k->getX();
 
-                int x_step = 40;
-                int y_step = 50;
+                int top_delta_y = k->getY();
+                int bot_delta_y = height - 480 - k->getY();
+                int left_delta_x = k->getX();
+                int right_delta_x = width - 640 - k->getX();
+
+                //todo : create a dialog that will output the number of images that will be created
+                int x_step = 150; //50
+                int y_step = 140; //40
 
                 //determining where to start cropping process
                 if(top_delta_y < bot_delta_y){
                     crop_start_y = k->getY();
-                    crop_end_y = k->getY() + 640;
-                    std::cout<<"if 1 \n crop start y :"<< crop_start_y
-                             <<"  crop end y :"<<crop_end_y<<"\n";
+                    crop_end_y = k->getY() + 480;
+                    //std::cout<<"if 1 \n crop start y :"<< crop_start_y
+                    //         <<"  crop end y :"<<crop_end_y<<"\n";
                     if(crop_end_y > height){
                         int temp_delta = crop_end_y - height;
                         crop_start_y = k->getY() - temp_delta;
                         crop_end_y = height;
-                        std::cout<<"if 1.5 \n crop start y :"<< crop_start_y
-                                 <<"  crop end y :"<<crop_end_y<<"\n";
+                        //std::cout<<"if 1.5 \n crop start y :"<< crop_start_y
+                        //         <<"  crop end y :"<<crop_end_y<<"\n";
                     }
                     y_step = y_step * -1;
                 }
                 else {
-                    crop_start_y = (k->getY() + k->getPixelHeight()) - 640;
-                    crop_end_y = crop_start_y + 640;
-                    std::cout<<"if 2 \n crop start y :"<< crop_start_y
-                             <<"  crop end y :"<<crop_end_y<<"\n";
+                    crop_start_y = (k->getY() + k->getPixelHeight()) - 480;
+                    crop_end_y = crop_start_y + 480;
+                    //std::cout<<"if 2 \n crop start y :"<< crop_start_y
+                    //         <<"  crop end y :"<<crop_end_y<<"\n";
                     if(crop_start_y < 0){
                         crop_end_y = crop_end_y - crop_start_y; // -- = +
                         crop_start_y = 0;
-                        std::cout<<"if 2.5 \n crop start y :"<< crop_start_y
-                                 <<"  crop end y :"<<crop_end_y<<"\n";
+                       // std::cout<<"if 2.5 \n crop start y :"<< crop_start_y
+                       //          <<"  crop end y :"<<crop_end_y<<"\n";
                     }
                 }
 
                 if(left_delta_x < right_delta_x){
                     crop_start_x = k->getX();
-                    crop_end_x = k->getX() + 480;
-                    std::cout<<"if 3 \n crop start x :"<< crop_start_x
-                             <<"  crop end x :"<<crop_end_x<<"\n";
+                    crop_end_x = k->getX() + 640;
+                    //std::cout<<"if 3 \n crop start x :"<< crop_start_x
+                    //         <<"  crop end x :"<<crop_end_x<<"\n";
                     if(crop_end_x > width){
                         int temp_delta = crop_end_x - width;
                         crop_start_x  = k->getX() - temp_delta;
                         crop_end_x = width;
-                        std::cout<<"if 3.5 \n crop start x :"<< crop_start_x
-                                 <<"  crop end x :"<<crop_end_x<<"\n";
+                      //std::cout<<"if 3.5 \n crop start x :"<< crop_start_x
+                      //           <<"  crop end x :"<<crop_end_x<<"\n";
                     }
                     x_step = x_step * -1;
                 }
                 else{
-                    crop_start_x = (k->getX()+ k->getPixelWidth()) - 480;
-                    crop_end_x = crop_start_x + 480;
-                    std::cout<<"if 4 \n crop start x :"<< crop_start_x
-                             <<"  crop end x :"<<crop_end_x<<"\n";
+                    crop_start_x = (k->getX()+ k->getPixelWidth()) - 640;
+                    crop_end_x = crop_start_x + 640;
+                    //std::cout<<"if 4 \n crop start x :"<< crop_start_x
+                    //         <<"  crop end x :"<<crop_end_x<<"\n";
                     if(crop_start_x < 0){
                         crop_end_x = crop_end_x - crop_start_x;
                         crop_start_x = 0;
-                        std::cout<<"if 4.5 \n cropt start x :"<< crop_start_x
-                                 <<"  crop end x :"<<crop_end_x<<"\n";
+                        //std::cout<<"if 4.5 \n cropt start x :"<< crop_start_x
+                        //         <<"  crop end x :"<<crop_end_x<<"\n";
                     }
                 }
                 //We are moving the cropping window to generate more than one picture of each object
                 int start_pos_x = crop_start_x;
-                int count = 0;
+                int image_count = 0;
                 //std::cout<<"\n\nimage dim: " << image_dimension << "\n";
                 //std::cout<<"cropt start y :"<<crop_start_y
                 //        <<"  crop end y :"<<crop_end_y<<"\n";
+
+                int max_inside_count = 0;
                 while(crop_start_y >= 0 && crop_start_y <= k->getY() && crop_end_y <= height && crop_end_y >= k->getY() + k->getPixelHeight()){
                     //std::cout  <<"crop start x :"<<crop_start_x
                       //         <<"  crop end x :"<<crop_end_x << "\n";
                     while(crop_start_x >= 0 && crop_start_x <= k->getX() && crop_end_x <= width && crop_end_x >= k->getX() + k->getPixelWidth()){
-
+                        //creating filename
                         std::string filename = (*i)->getFilename();             //get file name
                         QFileInfo fileInfo(QString::fromStdString(filename));
                         QString FileName = fileInfo.fileName();
+                        FileName.chop(4);
                         QString chan = QString::number((*j)->getChannelNumber());  //get channel number
-                        count++;
-                        QString ImageCount = QString::number(count);
+                        image_count++;
+                        QString ImageCount = QString::number(image_count);
                         FileName = FileName + "-" + chan + "_" + ImageCount;
                         QString ImageName = FileName + ".png";
-                        FileName = FileName + ".txt";
+                        QString LabelName = FileName + ".txt";
 
-                        std::string FilePath = path + "/labels";
-                        std::string ImagePath = path + "/images";
+                        std::cout<<LABELSPATH<<"\n";
+                        std::cout<<IMAGESPATH<<"\n";
 
-                        QFileInfo pathInfoFile(QString::fromStdString(FilePath));
-                        QFileInfo pathInfoImage(QString::fromStdString(ImagePath));
-
-                        pathInfoFile.setFile(QString::fromStdString(FilePath),FileName);
-                        pathInfoImage.setFile(QString::fromStdString(ImagePath),ImageName);
+                        QFileInfo pathInfoFile(LabelsPath, LabelName);
+                        QFileInfo pathInfoImage(ImagesPath, ImageName);
 
                         QString filePath = pathInfoFile.filePath();
                         QString imagePath = pathInfoImage.filePath();
 
-                        std::string FILEPATH = filePath.toStdString();
+                        std::string LABELPATH = filePath.toStdString();
                         std::string IMAGEPATH = imagePath.toStdString();
-                        std::cout<<FILEPATH<<"\n";
+                        std::cout<<LABELPATH<<"\n";
                         std::cout<<IMAGEPATH<<"\n";
 
-
-                        cv::Mat new_image = image(cv::Range(crop_start_y, crop_end_y), cv::Range(crop_start_x, crop_end_x));
-                        //needs to be fix
-                        float norm_detect_xCenter = float((float(k->getPixelWidth()/2.0) + (k->getX() - crop_start_x))/640.0);
-                        float norm_detect_yCenter = float((float(k->getPixelHeight()/2.0) + (k->getY() - crop_start_y ))/640.0);
-                        float detect_norm_width = float(k->getPixelWidth()/640.0);
-                        float detect_norm_height = float(k->getPixelHeight()/640.0);
+                        cv::Mat cropped_image = image(cv::Range(crop_start_y, crop_end_y), cv::Range(crop_start_x, crop_end_x));
 
                         //we can abstract this part, since it seems to be a recurrent thing to do
                         //inv_obj.write_to_file(vector<inv_obj> , filename)
                         std::ofstream outFile;
-                        outFile.open( FILEPATH, std::ofstream::out );
+                        outFile.open( LABELPATH, std::ofstream::out );
                         if( outFile.is_open() ){
                             mutex.lock();
-                            outFile <<"0 "<< norm_detect_xCenter <<" "<< norm_detect_yCenter <<" "
-                                    << detect_norm_width <<" "<< detect_norm_height <<"\n";
+
+                            // All element in cropping section gets written to same file
+                            //not handling partial bounding box yet
+                            struct region crop_image{crop_start_x,crop_start_y,crop_end_x,crop_end_y};
+                            int inside_count = 0;
+                            for(unsigned int index2 = index; index2 < (*j)->getObjects().size(); index2++){
+                                auto obj = (*j)->getObjects().at(index2);
+                                if(obj->is_inside(crop_image) == true){
+                                    //std::cout<<"is inside \n";
+                                    inside_count++;
+                                    std::map<std::string,int> CLASS { {"crabtrap", 0}, {"rope", 1}, {"shipwreck", 2}, {"rock", 3} };
+                                    auto search = CLASS.find(obj->getName()); //object inventory name is class name
+                                    int Class = 0;
+                                    if (search != CLASS.end()) {
+                                        //std::cout << "Found " << search->first << " " << search->second << '\n';
+                                        Class = search->second;
+                                    }
+                                    else {
+                                        //std::cout << "Not found\n";
+                                        Class = CLASS.size() + 1;
+                                    }
+
+                                    //normalisation
+                                    float norm_detect_xCenter = float((float(k->getPixelWidth()/2.0) + (k->getX() - crop_start_x))/640.0);
+                                    float norm_detect_yCenter = float((float(k->getPixelHeight()/2.0) + (k->getY() - crop_start_y ))/640.0);
+                                    float detect_norm_width = float(k->getPixelWidth()/640.0);
+                                    float detect_norm_height = float(k->getPixelHeight()/640.0);
+
+                                    outFile << Class <<" "<< norm_detect_xCenter <<" "<< norm_detect_yCenter <<" "
+                                            << detect_norm_width <<" "<< detect_norm_height <<"\n";
+                                }
+                            }
+                            if(inside_count > max_inside_count){max_inside_count = inside_count;}
                         }
-                        else{
-                            std::cerr<<"cant create new file \n"<<std::endl;
-                        }
+                        else{std::cerr<<"can't create new file \n"<<std::endl;}
+
                         mutex.unlock();
                         outFile.close();
-                        cv::imwrite(IMAGEPATH, new_image);
-
+                        cv::imwrite(IMAGEPATH, cropped_image);
                         crop_start_x = crop_start_x + x_step;
-                        crop_end_x = crop_start_x + 480;
+                        crop_end_x = crop_start_x + 640;
                     }
                     crop_start_x = start_pos_x;
-                    crop_end_x = crop_start_x + 480;
+                    crop_end_x = crop_start_x + 640;
                     crop_start_y = crop_start_y + y_step;
-                    crop_end_y = crop_start_y + 640;
+                    crop_end_y = crop_start_y + 480;
                 }
+                if  (max_inside_count > 1){ index += max_inside_count - 1; }
             }
         }
     }
+    std::cout<<"done \n";
 }
