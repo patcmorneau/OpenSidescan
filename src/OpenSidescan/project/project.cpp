@@ -595,8 +595,8 @@ void Project::exportInventory4Yolo(std::string & path){
                 int right_delta_x = width - 640 - k->getX();
 
                 //todo : create a dialog that will output the number of images that will be created
-                int x_step = 150; //50
-                int y_step = 140; //40
+                int x_step = 50; //50
+                int y_step = 40; //40
 
                 //determining where to start cropping process
                 if(top_delta_y < bot_delta_y){
@@ -708,7 +708,7 @@ void Project::exportInventory4Yolo(std::string & path){
                                 if(obj->is_inside(crop_image) == true){
                                     //std::cout<<"is inside \n";
                                     inside_count++;
-                                    std::map<std::string,int> CLASS { {"crabtrap", 0}, {"rope", 1}, {"shipwreck", 2}, {"rock", 3} };
+                                    std::map<std::string,int> CLASS { {"crabtrap", 0}, {"rope", 1}, {"shipwreck", 2}, {"ghostgear", 3} };
                                     auto search = CLASS.find(obj->getName()); //object inventory name is class name
                                     int Class = 0;
                                     if (search != CLASS.end()) {
@@ -749,5 +749,4 @@ void Project::exportInventory4Yolo(std::string & path){
             }
         }
     }
-    std::cout<<"done \n";
 }
