@@ -578,7 +578,7 @@ void Project::exportInventory4Yolo(std::string & path){
                 auto k = (*j)->getObjects().at(index);
                 cv::Mat image = (*j)->getImage();                           //get image
                 cv::Size image_dimension = image.size();
-                cv::cvtColor(image,image, cv::COLOR_GRAY2BGR);
+                //cv::cvtColor(image,image, cv::COLOR_GRAY2BGR);
                 //std::cout<<image_dimension<<"\n";
                 int height = image_dimension.height;                        //get image height
                 int width = image_dimension.width;
@@ -676,8 +676,8 @@ void Project::exportInventory4Yolo(std::string & path){
                         QString ImageName = FileName + ".png";
                         QString LabelName = FileName + ".txt";
 
-                        std::cout<<LABELSPATH<<"\n";
-                        std::cout<<IMAGESPATH<<"\n";
+                        //std::cout<<LABELSPATH<<"\n";
+                        //std::cout<<IMAGESPATH<<"\n";
 
                         QFileInfo pathInfoFile(LabelsPath, LabelName);
                         QFileInfo pathInfoImage(ImagesPath, ImageName);
@@ -687,8 +687,8 @@ void Project::exportInventory4Yolo(std::string & path){
 
                         std::string LABELPATH = filePath.toStdString();
                         std::string IMAGEPATH = imagePath.toStdString();
-                        std::cout<<LABELPATH<<"\n";
-                        std::cout<<IMAGEPATH<<"\n";
+                        //std::cout<<LABELPATH<<"\n";
+                        //std::cout<<IMAGEPATH<<"\n";
 
                         cv::Mat cropped_image = image(cv::Range(crop_start_y, crop_end_y), cv::Range(crop_start_x, crop_end_x));
 
@@ -722,9 +722,9 @@ void Project::exportInventory4Yolo(std::string & path){
 
                                     //normalisation
                                     float norm_detect_xCenter = float((float(k->getPixelWidth()/2.0) + (k->getX() - crop_start_x))/640.0);
-                                    float norm_detect_yCenter = float((float(k->getPixelHeight()/2.0) + (k->getY() - crop_start_y ))/640.0);
+                                    float norm_detect_yCenter = float((float(k->getPixelHeight()/2.0) + (k->getY() - crop_start_y ))/480.0);
                                     float detect_norm_width = float(k->getPixelWidth()/640.0);
-                                    float detect_norm_height = float(k->getPixelHeight()/640.0);
+                                    float detect_norm_height = float(k->getPixelHeight()/480.0);
 
                                     outFile << Class <<" "<< norm_detect_xCenter <<" "<< norm_detect_yCenter <<" "
                                             << detect_norm_width <<" "<< detect_norm_height <<"\n";
