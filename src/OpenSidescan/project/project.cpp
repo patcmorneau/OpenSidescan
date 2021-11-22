@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <vector>
+#include <stdlib.h>     /* srand, rand */
 
 #include <QFile>
 #include <QtXml>
@@ -552,130 +553,153 @@ bool Project::containsFile(std::string & filename){
 }
 
 void Project::exportInventory4Yolo(std::string & path){
-    for(auto i = files.begin(); i != files.end(); ++i){      
+
+    srand (time(NULL));
+    //creating directories for images and labels
+    QDir Path(QString::fromStdString(path));
+
+    Path.mkpath("labels");
+    Path.mkpath("images");
+    //needs to be tested on windows
+    QDir LabelsPath(QString::fromStdString(path)+ "/labels");
+    QDir ImagesPath(QString::fromStdString(path)+ "/images");
+    //std::cout<<LabelsPath<<"\n";
+    //std::cout<<ImagesPath<<"\n";
+
+    QString labelsPath = LabelsPath.path();
+    QString imagesPath = ImagesPath.path();
+
+    std::string LABELSPATH = labelsPath.toStdString();
+    std::string IMAGESPATH = imagesPath.toStdString();
+    //std::cout<<LABELSPATH<<"\n";
+    //std::cout<<IMAGESPATH<<"\n";
+
+
+    for(auto i = files.begin(); i != files.end(); ++i){
         for(auto j=(*i)->getImages().begin();j!=(*i)->getImages().end();j++){
             int image_count =0;
             for(unsigned int index = 0; index < (*j)->getObjects().size(); index++){
                 auto k = (*j)->getObjects().at(index);
+                cv::Mat image = (*j)->getImage();                           //get image
+                cv::Size image_dimension = image.size();
+                //std::cout<<image_dimension<<"\n";
+                int height = image_dimension.height;                        //get image height
+                int width = image_dimension.width;
+
+                //init crop var
+                int crop_start_y = k->getYCenter() - 240;
+                int crop_end_y = crop_start_y + 480;
+                int crop_start_x = k->getXCenter() - 320;
+                int crop_end_x = crop_start_x + 640;
+                std::cout<<"Y center: "<<k->getYCenter()<<"\n";
+                std::cout<<"X center: "<<k->getXCenter()<<"\n";
+
+                //crop the region randomly
+                //crop_start_y = rand() % (480 + 1) + crop_start_y;
+                //std::cout <<"rand crop start y: "<< crop_start_y << " Y top left corner: "<<k->getY()<<"\n";
+                //crop_end_y = crop_start_y + 480;
+
+                if(crop_end_y > height){
+                    int temp_delta = crop_end_y - height;
+                    crop_start_y = crop_start_y - temp_delta;
+                    crop_end_y = height;
+                }
+                if(crop_start_y < 0){
+                    crop_end_y = crop_end_y - crop_start_y;
+                    crop_start_y = 0;
+                }
+
+                //crop_start_x = rand() % (640 + 1) + crop_start_x;
+                //std::cout <<"rand crop start x: "<< crop_start_x << " X top left corner: "<<k->getX()<<"\n";
+                //crop_end_x = crop_start_x + 640;
+
+                if(crop_end_x > width){
+                    int temp_delta = crop_end_x - width;
+                    crop_start_x  = crop_start_x - temp_delta;
+                    crop_end_x = width;
+                }
+
+                if(crop_start_x < 0){
+                    crop_end_x = crop_end_x - crop_start_x;
+                    crop_start_x = 0;
+                }
+
+
                 std::string filename = (*i)->getFilename();             //get file name
                 QFileInfo fileInfo(QString::fromStdString(filename));
                 QString FileName = fileInfo.fileName();
-                QFileInfo pathInfo(QString::fromStdString(path));
-                pathInfo.setFile(QString::fromStdString(path),FileName);
-                QString filePath = pathInfo.filePath();
-                std::string FILEPATH = filePath.toStdString();
-
+                FileName.chop(4);
                 QString chan = QString::number((*j)->getChannelNumber());  //get channel number
-                std::string channel = chan.toStdString();
-                image_count ++;                                             //image number
+                image_count++;
                 QString ImageCount = QString::number(image_count);
-                std::string count = ImageCount.toStdString();
+                FileName = FileName + "-" + chan + "_" + ImageCount;
+                QString ImageName = FileName + ".png";
+                QString LabelName = FileName + ".txt";
 
-                FILEPATH.append("-" + channel + "_" + count);
-                std::string image_name = FILEPATH + ".jpg";  //final image name
-                FILEPATH.append(".txt");                    //final hits file name
+                //std::cout<<LABELSPATH<<"\n";
+                //std::cout<<IMAGESPATH<<"\n";
 
-                cv::Mat image = (*j)->getImage();                           //get image
-                cv::Size image_dimension = image.size();
-                int height = image_dimension.height;                        //get image height
-                int width = image_dimension.width;
-                int start_range_height = 0;
-                int end_range_height = 0;
+                QFileInfo pathInfoFile(LabelsPath, LabelName);
+                QFileInfo pathInfoImage(ImagesPath, ImageName);
 
-                //cropping selection
-                if(width < height){
-                    start_range_height = k->getY() - width/2 ;
-                    end_range_height = k->getY() + width/2;
+                QString filePath = pathInfoFile.filePath();
+                QString imagePath = pathInfoImage.filePath();
 
-                    //handle cropping selection execptions
-                    if(start_range_height < 0 || end_range_height > height ){
-
-                        if(start_range_height < 0 ){
-                            end_range_height = width;
-                            start_range_height = 0;
-                        }
-                        if(end_range_height > height){
-                            start_range_height = height - width;
-                            end_range_height = height;
-                        }
-                    }
-                }
-                else{
-                    end_range_height = image_dimension.height;
-                    int padding = image_dimension.width - image_dimension.height;
-                    cv::copyMakeBorder( image, image, 0, padding, 0, 0, cv::BORDER_CONSTANT);
-                    image_dimension = image.size();
-                }
-
-                if(end_range_height - start_range_height != image_dimension.width){
-                    if(image_dimension.width - (end_range_height - start_range_height) > 0){
-                        end_range_height += (image_dimension.width - (end_range_height - start_range_height));
-                    }
-                    else{
-                        end_range_height -= ((end_range_height - start_range_height) - image_dimension.width );
-                    }
-                }
-
-                image = image(cv::Range(start_range_height, end_range_height), cv::Range(0,image_dimension.width));
-                cv::imwrite(image_name,image);
-
+                std::string LABELPATH = filePath.toStdString();
+                std::string IMAGEPATH = imagePath.toStdString();
+                std::cout<<LABELPATH<<"\n";
+                //std::cout<<IMAGEPATH<<"\n";
+                std::cout<<"img dim "<<image_dimension<<"\n";
+                std::cout<<"crop region \n" << crop_start_x << " " <<crop_start_y<<" "<< crop_end_x <<" "<<crop_end_y<<"\n\n\n";
+                cv::Mat cropped_image = image(cv::Range(crop_start_y, crop_end_y), cv::Range(crop_start_x, crop_end_x));
+                cv::imwrite(IMAGEPATH, cropped_image);
+                //we can abstract this part, since it seems to be a recurrent thing to do
+                //inv_obj.write_to_file(vector<inv_obj> , filename)
                 std::ofstream outFile;
-                outFile.open( FILEPATH, std::ofstream::out );
+                outFile.open( LABELPATH, std::ofstream::out );
                 if( outFile.is_open() ){
                     mutex.lock();
 
                     // All element in cropping section gets written to same file
-                    //not handling partial bounding box
-                    struct region crop_image{0,start_range_height,image_dimension.width,end_range_height};
+                    //not handling partial bounding box yet
+                    struct region crop_image{crop_start_x,crop_start_y,crop_end_x,crop_end_y};
                     int inside_count = 0;
                     for(unsigned int index2 = index; index2 < (*j)->getObjects().size(); index2++){
                         auto obj = (*j)->getObjects().at(index2);
                         if(obj->is_inside(crop_image) == true){
                             //std::cout<<"is inside \n";
                             inside_count++;
-                            /*
-                            One row per object
-                            Each row is class x_center y_center width height format.
-                            Box coordinates must be in normalized xywh format (from 0 - 1).
-                            If your boxes are in pixels, divide x_center and width by image width, and y_center and height by image height.
-                            */
-
-                            // images are dimension [width X width] , to normalise we divide by [width X width]
-                            float norm_detect_xCenter = float((obj->getXCenter()/float(width)));
-                            float norm_detect_yCenter = float((float(obj->getPixelHeight())/2.0)/float(width));
-                            float detect_norm_width = float((obj->getPixelWidth()/float(width)));
-                            float detect_norm_height = float(float(obj->getPixelHeight())/float(width));
-                            //for debugging purposes
-                            /*
-                            int norm_detect_xCenter = obj->getXCenter();
-                            int norm_detect_yCenter = obj->getYCenter();
-                            int detect_norm_width = obj->getPixelWidth();
-                            int detect_norm_height = obj->getPixelHeight();
-                            */
-
-                            //Hardcoded class
-                            //class map could be build by reading inventory obj
-                            std::map<std::string,int> CLASS { {"crabtrap", 0}, {"rope", 1}, {"shipwreck", 2}, };
+                            std::map<std::string,int> CLASS { {"crabtrap", 0}, {"rope", 1}, {"shipwreck", 2}, {"ghostgear", 3} };
                             auto search = CLASS.find(obj->getName()); //object inventory name is class name
                             int Class = 0;
                             if (search != CLASS.end()) {
-                                    //std::cout << "Found " << search->first << " " << search->second << '\n';
-                                    Class = search->second;
-                                } else {
-                                    //std::cout << "Not found\n";
-                                    Class = CLASS.size() + 1;
-                                }
+                                //std::cout << "Found " << search->first << " " << search->second << '\n';
+                                Class = search->second;
+                            }
+                            else {
+                                //std::cout << "Not found\n";
+                                Class = CLASS.size() + 1;
+                            }
 
-                            outFile<< Class <<" "<< norm_detect_xCenter <<" "<< norm_detect_yCenter <<" "
-                                << detect_norm_width <<" "<< detect_norm_height <<"\n";
+                            //normalisation
+                            float norm_detect_xCenter = float((float(k->getPixelWidth()/2.0) + (k->getX() - crop_start_x))/640.0);
+                            float norm_detect_yCenter = float((float(k->getPixelHeight()/2.0) + (k->getY() - crop_start_y ))/480.0);
+                            float detect_norm_width = float(k->getPixelWidth()/640.0);
+                            float detect_norm_height = float(k->getPixelHeight()/480.0);
 
+                            outFile << Class <<" "<< norm_detect_xCenter <<" "<< norm_detect_yCenter <<" "
+                                    << detect_norm_width <<" "<< detect_norm_height <<"\n";
                         }
                     }
-                    index += inside_count - 1;
+                    if(inside_count > 1){
+                        index += inside_count - 1;
+                    }
+                    else{
+                        index += inside_count;
+                    }
                 }
-                else{
-                    std::cerr<<"cant create new file"<<std::endl;
-                }
+                else{std::cerr<<"can't create new file \n"<<std::endl;}
+
                 mutex.unlock();
                 outFile.close();
             }
