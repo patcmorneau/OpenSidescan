@@ -79,18 +79,18 @@ public:
     		int row = windowSize/2;
 			int col = windowSize/2;
 					
-			itY = img.begin<cv::Vec3i>() + (windowSize/2 * img.cols) + windowSize/2;
-			endY = img.end<cv::Vec3i>() - ((windowSize/2 * img.cols) - windowSize/2);
+			itY = img.begin<cv::Vec3b>() + (windowSize/2 * img.cols) + windowSize/2;
+			endY = img.end<cv::Vec3b>() - ((windowSize/2 * img.cols) - windowSize/2);
 			
 			//for every pixel in image
 			for(itY, endY; itY != endY; itY += img.cols){
-				std::cout<<"image loop: "<<row - windowSize/2<<"\n";
+				//std::cout<<"image loop: "<<row - windowSize/2<<"\n";
 				row++; //nedded for shade and prominence feature
 				col = windowSize/2;
 				for(itX = itY, endX = itX + img.cols - windowSize; itX != endX; itX++){
 					col++;
 					//compute glcm over window
-					cv::Mat glcm(cv::Size(4,4), CV_64F, cv::Scalar(0)); // XXX
+					cv::Mat glcm(cv::Size(256,256), CV_64F, cv::Scalar(0)); // XXX
 					int count = 0;
 									
 					winItY = itX - ((windowSize/2 - 1) * img.cols) - (windowSize/2 - 1);
@@ -118,7 +118,7 @@ public:
 					//std::cout<< glcm<<"\n\n";
 					//std::this_thread::sleep_for (std::chrono::seconds(2));
 					
-					cv::Mat transposedGlcm(cv::Size(4,4), CV_64F, cv::Scalar(0));
+					cv::Mat transposedGlcm(cv::Size(256,256), CV_64F, cv::Scalar(0));
 					cv::transpose(glcm, transposedGlcm);
 					cv::Mat normalizedGlcm = (glcm + transposedGlcm)/(count*2);
 					//std::cout<< normalizedGlcm<<"\n\n";
@@ -238,7 +238,7 @@ public:
 					time = duration.count()/1000;
 					std::cout<<"norm glcm loop 2"<<time<<"\n";
 					*/
-					std::cout<<"features: "<< energy <<" "<< contrast <<" "<< homogeneity <<" "<< entropy <<" "<< correlation <<"\n";
+					//std::cout<<"features: "<< energy <<" "<< contrast <<" "<< homogeneity <<" "<< entropy <<" "<< correlation <<"\n";
 					features.push_back(energy);
 					features.push_back(contrast);
 					features.push_back(homogeneity);

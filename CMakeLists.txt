@@ -131,6 +131,8 @@ if(UNIX)
 	target_link_libraries(sidescan-detect PUBLIC cli_dep)
 	target_link_libraries(sidescan-dump PUBLIC cli_dep)
 	target_link_libraries(sidescan-glcm PUBLIC cli_dep)
+	add_compile_options(-Wall -0Fast)
+	
 
 endif()
 if(WIN32)
