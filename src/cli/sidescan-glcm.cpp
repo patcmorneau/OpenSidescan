@@ -62,144 +62,202 @@ public:
         }
         
         
-        void computeGlcm(cv::Mat &img, int windowSize, std::vector<std::vector<std::vector<double>>> &processedFeatures){
-        
-        	if(windowSize % 2 == 0){
-        		std::cerr<<"windowSize must be odd !\n";
-        		return;
-        	}
-        	else{
-        		
-        		std::vector<double> features;
-        		std::vector<std::vector<double>> ys;
-        		features.reserve(7);
-        		ys.reserve(img.rows);
-        		
-		    	//for every pixel in image
-		    	for(int col = windowSize/2; col<img.cols - (windowSize/2); col=col+(windowSize/2)){
-		    		for (int row = windowSize/2; row<img.rows - (windowSize/2); row=row+(windowSize/2)){
-		    			//compute glcm over window
-		    			cv::Mat glcm(cv::Size(256,256), CV_64F, cv::Scalar(0)); // XXX
-		    			int count = 0;
-		    			
-		    			
-		    			//for pixel in window
-		    			for(int windowCol = col-(windowSize/2) +1 ; windowCol<col+(windowSize/2) -1; windowCol++){
-		    				for(int windowRow = row-(windowSize/2) +1 ; windowRow<row+(windowSize/2) -1; windowRow++){
+	void computeGlcm(cv::Mat &img, int windowSize, std::vector<std::vector<std::vector<double>>> &processedFeatures){
+    
+    	if(windowSize % 2 == 0){
+    		std::cerr<<"windowSize must be odd !\n";
+    		return;
+    	}
+    	else{
+    		std::vector<double> features;
+    		std::vector<std::vector<double>> ys;
+    		features.reserve(7);
+    		ys.reserve(img.rows);
+    		
+    		cv::MatIterator_<cv::Vec3b> itY, endY, itX, endX, winItY, winItX, wEndY, wEndX;
+    		
+    		int row = windowSize/2;
+			int col = windowSize/2;
+					
+			itY = img.begin<cv::Vec3i>() + (windowSize/2 * img.cols) + windowSize/2;
+			endY = img.end<cv::Vec3i>() - ((windowSize/2 * img.cols) - windowSize/2);
+			
+			//for every pixel in image
+			for(itY, endY; itY != endY; itY += img.cols){
+				std::cout<<"image loop: "<<row - windowSize/2<<"\n";
+				row++; //nedded for shade and prominence feature
+				col = windowSize/2;
+				for(itX = itY, endX = itX + img.cols - windowSize; itX != endX; itX++){
+					col++;
+					//compute glcm over window
+					cv::Mat glcm(cv::Size(4,4), CV_64F, cv::Scalar(0)); // XXX
+					int count = 0;
+									
+					winItY = itX - ((windowSize/2 - 1) * img.cols) - (windowSize/2 - 1);
+					wEndY = itX + ((windowSize/2) * img.cols) - (windowSize/2 - 1);
+					
+					//for pixel in window
+					for(winItY, wEndY; winItY != wEndY; winItY += img.cols){
+						for(winItX = winItY, wEndX = winItX + (windowSize - 2); winItX != wEndX; winItX++ ){
+							
+							int value = int((*winItX)[0]);
+							int valueUp = int((*(winItX - img.cols))[0]);
+							int valueDown = int((*(winItX + img.cols))[0]);
+							int valueLeft = int((*(winItX - 1))[0]);
+							int valueRight = int((*(winItX + 1))[0]);
+							//std::cout<<"values: "<<value<<" "<<valueUp<<" "<<valueDown<<" "<<valueLeft<<" "<<valueRight<< "\n";
+							
+							glcm.at<double>(valueUp, value, 0)++;
+							glcm.at<double>(valueDown, value, 0)++;
+							glcm.at<double>(valueLeft, value, 0)++;
+							glcm.at<double>(valueRight, value, 0)++;
+							count += 4;
+							
+						}
+					}
+					//std::cout<< glcm<<"\n\n";
+					//std::this_thread::sleep_for (std::chrono::seconds(2));
+					
+					cv::Mat transposedGlcm(cv::Size(4,4), CV_64F, cv::Scalar(0));
+					cv::transpose(glcm, transposedGlcm);
+					cv::Mat normalizedGlcm = (glcm + transposedGlcm)/(count*2);
+					//std::cout<< normalizedGlcm<<"\n\n";
+					//std::this_thread::sleep_for (std::chrono::seconds(2));
+					
+					double energy = 0;
+					double contrast = 0;
+					double homogeneity = 0;
+					double entropy = 0;
+					double correlation = 0;
+					double shade = 0;
+					double prominence = 0;
+					double glcmMean = 0;
+					double sigma = 0;
+					double squaredVarianceIntensity = 0;
+					double A = 0;
+					double B = 0;
+					
+					//auto start = high_resolution_clock::now();
+					int r =0, c = 0;
+					cv::MatIterator_<cv::Vec3d> itY2, endY2, itX2, endX2;
+					for(itY2 =normalizedGlcm.begin<cv::Vec3d>(), endY2 =normalizedGlcm.end<cv::Vec3d>() ; itY2 != endY2; itY2+=normalizedGlcm.cols){
+						r++;
+						c=0;
+						for(itX2 = itY2, endX2 = itX2 + normalizedGlcm.cols; itX2 != endX2; itX2++){
+							c++;
+							double pij = (*itX)[0];
+							//std::cout<<"intensity: "<<intensity<<"\n";
+							//std::cout<<"pij: "<<pij<<"\n";
+
+							if(pij != 0){
+								homogeneity += pij/(1.0+((c-r)*(c-r)));
+								energy += pij * pij;
+								contrast += (c-r)*(c-r)*pij;
+								entropy += -(log(pij)*pij);
+							}
+							else{
+								break;
+								// += 0 to all feature
+							}
+
+						}
+						
+					}
+					
+					for(itY2 =normalizedGlcm.begin<cv::Vec3d>(), endY2 =normalizedGlcm.end<cv::Vec3d>() ; itY2 != endY2; itY2+=normalizedGlcm.cols){
+						for(itX2 = itY2, endX2 = itX2 + normalizedGlcm.cols; itX2 != endX2; itX2++){
+							double pij = (*itX)[0];
+							double intensity = double((*itX)[0]);
+							if(pij != 0){
+								glcmMean += pij * intensity;
+							}
+						}
+					}
+					
+					for(itY2 =normalizedGlcm.begin<cv::Vec3d>(), endY2 =normalizedGlcm.end<cv::Vec3d>() ; itY2 != endY2; itY2+=normalizedGlcm.cols){
+						for(itX2 = itY2, endX2 = itX2 + normalizedGlcm.cols; itX2 != endX2; itX2++){
+							double pij = (*itX)[0];
+							double intensity = double((*itX)[0]);
+							if(pij != 0){
+								squaredVarianceIntensity += pij*((intensity - glcmMean)*(intensity - glcmMean));
+							}
+						}
+					}
+					/*
+					auto stop = high_resolution_clock::now();
+					auto duration = duration_cast<microseconds>(stop - start);
+					double time = duration.count()/1000;
+					std::cout<<"norm glcm loop 1"<<time<<"\n";
+					
+					start = high_resolution_clock::now();
+					*/
+					for(itY2 =normalizedGlcm.begin<cv::Vec3d>(), endY2 =normalizedGlcm.end<cv::Vec3d>() ; itY2 != endY2; itY2+=normalizedGlcm.cols){
+						for(itX2 = itY2, endX2 = itX2 + normalizedGlcm.cols; itX2 != endX2; itX2++){
+							double pij = (*itX)[0];
+							if(pij != 0){
+								//XXX handle very small squaredVarianceIntensity
+								if(squaredVarianceIntensity < 1.0e-15){
+									squaredVarianceIntensity = 1.0e-15;
+								}
+								correlation += pij*(((c-glcmMean)*(r-glcmMean))/squaredVarianceIntensity);
+
+							}
+						}
+					}
+					
+					for(itY2 =normalizedGlcm.begin<cv::Vec3d>(), endY2 =normalizedGlcm.end<cv::Vec3d>() ; itY2 != endY2; itY2+=normalizedGlcm.cols){
+						for(itX2 = itY2, endX2 = itX2 + normalizedGlcm.cols; itX2 != endX2; itX2++){
+							double pij = (*itX)[0];
+							if(pij != 0){
+								double intensity = (double)(*itX)[0];
+								sigma = intensity - glcmMean; //XXX or sqrt(squaredVarianceIntensity);
+									
+								A=(pow((col+row)-2*glcmMean,3)*pij)/(pow(sigma, 3)*(sqrt(2*(1+correlation))));	
+								if(A > 0){
+									shade += pow(abs(A), 1/3);
+								}
+								else if(A<0){
+									shade += pow(abs(A), 1/3) * -1 ;
+								}
 								
-		    					int value = img.at<uchar>(windowRow, windowCol, 0);
-		    					int valueUp = img.at<uchar>(windowRow-1, windowCol, 0);
-		    					int valueDown = img.at<uchar>(windowRow+1, windowCol, 0);
-		    					int valueLeft = img.at<uchar>(windowRow, windowCol-1, 0);
-		    					int valueRight = img.at<uchar>(windowRow, windowCol+1, 0);
-		    					
-		    					glcm.at<double>(valueUp, value, 0)++;
-		    					glcm.at<double>(valueDown, value, 0)++;
-		    					glcm.at<double>(valueLeft, value, 0)++;
-		    					glcm.at<double>(valueRight, value, 0)++;
-		    					count += 4;
-		    					
-		    				}
-		    			}
-		    			
-		    			cv::Mat transposedGlcm(cv::Size(256,256), CV_64F, cv::Scalar(0));
-		    			cv::transpose(glcm, transposedGlcm);
-		    			cv::Mat normalizedGlcm = (glcm + transposedGlcm)/(count*2);
-		    			
-		    			double energy = 0;
-		    			double contrast = 0;
-		    			double homogeneity = 0;
-		    			double entropy = 0;
-		    			double correlation = 0;
-		    			double shade = 0;
-		    			double prominence = 0;
-		    			double glcmMean = 0;
-		    			double sigma = 0;
-		    			double squaredVarianceIntensity = 0;
-		    			double A = 0;
-		    			double B = 0;
-		    			for(int c = 0; c <normalizedGlcm.cols; c++){
-		    				for(int r = 0; r<normalizedGlcm.rows; r++){
-		    				
-		    					double pij = normalizedGlcm.at<double>(r,c,0);
-		    					double intensity = (double)img.at<uchar>(col,row,0);
-
-		    					if(pij != 0){
-									homogeneity += pij/(1.0+((c-r)*(c-r)));
-									energy += pij * pij;
-									contrast += (c-r)*(c-r)*pij;
-									entropy += -(log(pij)*pij);
-									squaredVarianceIntensity += pij*((intensity - glcmMean)*(intensity - glcmMean));
-									glcmMean += pij * intensity;
+								
+								B = (pow((col+row)- 2*glcmMean, 4)*pij)/(4* pow(sigma, 4)* pow(1+correlation, 2));
+								if(B > 0){
+									prominence += pow(abs(B), 1/4);
 								}
-								else{
-									break;
-									// += 0 to all feature
-								}
-	
-		    				}
-		    				
-		    			}
-
-		    			for(int c = 0; c <normalizedGlcm.cols; c++){
-		    				for(int r = 0; r<normalizedGlcm.rows; r++){
-		    					double pij = normalizedGlcm.at<double>(r,c,0);
-		    					if(pij != 0){
-		    						//XXX handle very small squaredVarianceIntensity
-		    						if(squaredVarianceIntensity < 1.0e-15){
-		    							squaredVarianceIntensity = 1.0e-15;
-		    						}
-									correlation += pij*(((c-glcmMean)*(r-glcmMean))/squaredVarianceIntensity);
-
+								else if(B < 0){
+									prominence += pow(abs(B), 1/4) * -1 ;
 								}
 							}
 						}
-						for(int c = 0; c <normalizedGlcm.cols; c++){
-		    				for(int r = 0; r<normalizedGlcm.rows; r++){
-		    					double pij = normalizedGlcm.at<double>(r,c,0);
-		    					if(pij != 0){
-		    						double intensity = (double)img.at<uchar>(col,row,0);
-									sigma = intensity - glcmMean; //XXX or sqrt(squaredVarianceIntensity);
-										
-									A=(pow((col+row)-2*glcmMean,3)*pij)/(pow(sigma, 3)*(sqrt(2*(1+correlation))));	
-									if(A > 0){
-										shade += pow(abs(A), 1/3);
-									}
-									else if(A<0){
-										shade += pow(abs(A), 1/3) * -1 ;
-									}
-									
-									
-									B = (pow((col+row)- 2*glcmMean, 4)*pij)/(4* pow(sigma, 4)* pow(1+correlation, 2));
-									if(B > 0){
-										prominence += pow(abs(B), 1/4);
-									}
-									else if(B < 0){
-										prominence += pow(abs(B), 1/4) * -1 ;
-									}
-								}
-		    				}
-		    			}
-						
-						features.push_back(energy);
-						features.push_back(contrast);
-						features.push_back(homogeneity);
-						features.push_back(entropy);
-						features.push_back(correlation);
-						features.push_back(shade);
-						features.push_back(prominence);
-						ys.push_back(features);
-						features.clear();
-   			
-		    		}
-		    		
-		    		processedFeatures.push_back(ys);
-		    		ys.clear();
-		    	}
-	
-		    }
-		return;
-        }
+					}
+					
+					/*
+					stop = high_resolution_clock::now();
+					duration = duration_cast<microseconds>(stop - start);
+					time = duration.count()/1000;
+					std::cout<<"norm glcm loop 2"<<time<<"\n";
+					*/
+					std::cout<<"features: "<< energy <<" "<< contrast <<" "<< homogeneity <<" "<< entropy <<" "<< correlation <<"\n";
+					features.push_back(energy);
+					features.push_back(contrast);
+					features.push_back(homogeneity);
+					features.push_back(entropy);
+					features.push_back(correlation);
+					features.push_back(shade);
+					features.push_back(prominence);
+					ys.push_back(features);
+					features.clear();
+				}
+				
+				processedFeatures.push_back(ys);
+				ys.clear();
+			}
+    	}
+	return;
+    }
+		
+        
         
         void generateImages(){
             std::cerr << "Generating images for " << channels.size() << " channels" << std::endl;
@@ -242,7 +300,7 @@ public:
                 int windowSize = 31; // TODO make it a param
                 cv::Mat classes;
                 std::vector<std::vector<std::vector<double>>> processedFeatures;
-                processedFeatures.reserve(I.cols/windowSize);
+                //processedFeatures.reserve(I.cols/windowSize);
                 computeGlcm(I, windowSize, processedFeatures);
                 
                 
